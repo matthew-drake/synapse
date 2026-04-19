@@ -1,0 +1,5 @@
+import org.synapse.modules.stimuli.StartStimulus
+import org.synapse.modules.responses.PrintResponse
+
+~ Connects the start stimulus to the print response
+start --> print
