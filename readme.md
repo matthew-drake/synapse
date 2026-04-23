@@ -24,6 +24,6 @@ Synapse scripts use the following grammar:
     <connection> ::= <name> " --> " <name>
 `
 
-~ is used to start a single line comment. Ctenizidae script does not support multi-line comments
+~ is used to start a single line comment. Synapse script does not support multi-line comments
 
 Parameters are published by Stimuli and consumed by Responses in the respective module code. Synapse scripts do not control parameter passing
