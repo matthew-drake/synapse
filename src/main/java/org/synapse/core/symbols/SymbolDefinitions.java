@@ -1,37 +1,87 @@
 package org.synapse.core.symbols;
 
 import java.util.HashMap;
+import java.util.Optional;
 
-// The symbol definitions object consists of a set of Symbols
-// These symbols can be required by responses and exported by stimuli
-// A stimulus that defines specific symbol is required to export it.
-
-// An example is the print response can require a string symbol called msg.
-// These effectively work as parameter requirements.
-
-// This is going to work internally to move data between stimulus and response objects in a guaranteed way
-// We can use reflection to unroll this automatically into a response method based on parameter types in the future but this is the backbone
+import org.synapse.core.symbols.SymbolDeclarations.SymbolDeclaration;
 
 public class SymbolDefinitions 
 {
-    // This pairs a name and its associated class token
+    public static class SymbolDefinedWithoutDeclarationException extends Exception
+    {
+        SymbolDefinedWithoutDeclarationException(SymbolDefinition s)
+        {
+            super("Cannot define symbol " + s.name() + ", without declaring it first");
+        }
+    }
+
+    public static class SymbolDefinitionTypeMismatchException extends Exception
+    {
+        SymbolDefinitionTypeMismatchException(SymbolDefinition s)
+        {
+            super("Type of symbol " + s.name() + ", does not match its declared type");
+        }
+    }
+
     public static class SymbolDefinition
     {
-        Class<?> clazz;
-        String name;
+        private String name;
+        private Object value;
+
+        public String name()
+        {
+            return name;
+        }
+
+        public <T> Optional<T> value(Class<T> clazz) 
+        {
+            if(clazz.isInstance(value))
+            {
+                return Optional.of(clazz.cast(value));
+            }
+            else
+            {
+                return Optional.empty();
+            }
+        }
+
+        public SymbolDefinition(String name, Object value)
+        {
+            this.name = name;
+            this.value = value;
+        }
     }
 
     HashMap<String, SymbolDefinition> definitions = new HashMap<>();
 
-    void defineSymbol(SymbolDefinition def)
+    public void defineSymbol(String name, Object value, SymbolDeclarations declarations) throws SymbolDefinitionTypeMismatchException, SymbolDefinedWithoutDeclarationException
     {
-        definitions.put(def.name, def);
+        SymbolDefinition s = new SymbolDefinition(name, value);
+        defineSymbol(s, declarations);
     }
 
-    SymbolDefinition getDefinition(String name)
+    public void defineSymbol(SymbolDefinition s, SymbolDeclarations declarations) throws SymbolDefinitionTypeMismatchException, SymbolDefinedWithoutDeclarationException
+    {
+        SymbolDeclaration associatedDeclaration = declarations.get(s.name);
+        if(associatedDeclaration != null)
+        {
+            if(associatedDeclaration.clazz.isInstance(s.value))
+            {
+                definitions.put(s.name(), s);
+            }
+            else
+            {
+                throw new SymbolDefinitionTypeMismatchException(s);
+            }
+        }
+        else
+        {
+            throw new SymbolDefinedWithoutDeclarationException(s);
+        }
+    }
+
+    public SymbolDefinition get(String name)
     {
         return definitions.get(name);
     }
-
-
 }

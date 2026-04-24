@@ -1,6 +1,7 @@
 package org.synapse.modules.stimuli;
 
 import org.synapse.core.Stimulus;
+import org.synapse.core.symbols.SymbolDeclarations;
 
 public class StartStimulus extends Stimulus
 {
@@ -10,12 +11,38 @@ public class StartStimulus extends Stimulus
         super("start");
     }
 
+    // @Override
+    // public Void call() 
+    // {
+    //     store("msg", "Welcome to Synapse");
+    //     trigger();
+    //     return null;    
+    // }
+
     @Override
-    public Void call() 
+    protected void declareSymbols(SymbolDeclarations declarations) 
     {
-        store("msg", "Welcome to Synapse");
+        declarations.declareSymbol("msg", String.class);
+    }
+
+    @Override
+    protected void main() throws Exception
+    {
+        // store("msg", "Welcome to Synapse");
+        publishSymbol("msg", "Welcome to Synapse");
         trigger();
-        return null;    
+    }
+
+    @Override
+    protected void init() throws Exception
+    {
+
+    }
+
+    @Override
+    protected void cleanup() throws Exception
+    {
+
     }
     
 }

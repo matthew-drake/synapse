@@ -3,6 +3,8 @@ package org.synapse.core;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.synapse.core.symbols.SymbolDataV2;
+
 // The broker is the middleman that is responsible for actually running Synapse
 // The Broker has a script that is used to run all Stimuli which then trigger responses
 
@@ -11,7 +13,7 @@ public class Broker
     final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
     Script script;
 
-    public void receive(Stimulus stimulus, StimulusData data)
+    public void receive(Stimulus stimulus, SymbolDataV2 data)
     {
         if(script != null)
         {

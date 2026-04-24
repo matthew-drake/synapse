@@ -1,5 +1,8 @@
 package org.synapse.core;
 
+import org.synapse.core.symbols.SymbolDataV2;
+import org.synapse.core.symbols.SymbolDeclarations;
+
 // Responses do something when triggered
 // The most basic form of this is just an interface 
 // but I am writing some logic to use reflection to pass data to stimuli
@@ -12,7 +15,21 @@ package org.synapse.core;
 public abstract class Response 
 {
     public final String name;
-    public abstract void trigger(StimulusData data);
+    private SymbolDeclarations declarations;
+
+    public void trigger(SymbolDataV2 data)
+    {
+        declareRequiredSymbols(declarations);
+        main();
+    }
+
+    protected abstract void declareRequiredSymbols(SymbolDeclarations declarations);
+    protected abstract void main();
+
+    private void validateInputSymbols(SymbolDataV2 data)
+    {
+        
+    }
 
     protected Response(String name)
     {
