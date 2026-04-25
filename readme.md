@@ -28,10 +28,32 @@ Synapse scripts use the following grammar:
 
 Parameters are published by Stimuli and consumed by Responses in the respective module code. Synapse scripts do not control parameter passing
 
-## Note:
+## Stimuli
 
-Synapse relies on reflection internally in order to provide data to response objects in a type-safe compile-time aware manner
+Stimuli are classes deriving from the Stimulus base class.
 
-Scripts compiled for use with Synapse MUST be compiled using the "-parameters" flag so that they retain parameter names for reflection purposes.
+They require a simple void main() method to function.
 
-Failure to do so will result in an exception being thrown because response objects consider both parameter names and types when verifying input data to responses.
+Stimuli can publish variables using the publishData function, and they call trigger() in order to fire connected responses.
+
+Stimuli are automatically run by the Synapse Broker
+
+## Responses
+
+Response classes are classes deriving from 
+
+### Implicit Binding:
+
+When using implicit binding (BindStrategy.Implicit) with responses, you MUST compile your responses with the -parameters flag in order to maintain parameter names.
+
+The maven configuration for Synapse is already configured to do this so unless you are compiling your response objects from outside this repository you should be good.
+
+Implicit Binding matches incoming stimulus data against parameter names and types directly. This means that your method signatures are much shorter. Implicit binding is the preferred method for most responses because of this.
+
+### Annotation Binding
+
+Annotation binding (BindStrategy.Annotation) requires that all method parameters in your main method are annotated with @Bind
+
+Failure to do so will result in an exception being thrown
+
+Annotation binding results in longer method signatures, but allows you to rename inputs and does not require the -parameters flag to be set, making it useful for situations where you cannot control your compilation process.

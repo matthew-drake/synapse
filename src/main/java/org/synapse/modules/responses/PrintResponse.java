@@ -9,7 +9,8 @@ public class PrintResponse extends Response
         super("print");
     }
 
-    public void main(String msg) 
+    @Bind(strategy = BindStrategy.Annotation)
+    public void main(@BindParam("msg") String msg) 
     {
         System.out.println(msg);
     }
