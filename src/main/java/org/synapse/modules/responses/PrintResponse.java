@@ -1,7 +1,6 @@
 package org.synapse.modules.responses;
 
 import org.synapse.core.Response;
-import org.synapse.core.StimulusData;
 
 public class PrintResponse extends Response
 {
@@ -9,13 +8,10 @@ public class PrintResponse extends Response
     {
         super("print");
     }
-    
-    public void trigger(StimulusData stimulusData) 
+
+    public void main(String msg) 
     {
-        String msg = stimulusData.get("msg", String.class).get();
         System.out.println(msg);
     }
 
-    
-    
 }

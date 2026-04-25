@@ -2,64 +2,40 @@ package org.synapse.core;
 
 import java.util.concurrent.Callable;
 
-import org.synapse.core.symbols.SymbolDataV2;
-import org.synapse.core.symbols.SymbolDeclarations;
-import org.synapse.core.symbols.SymbolDefinitions.SymbolDefinedWithoutDeclarationException;
-import org.synapse.core.symbols.SymbolDefinitions.SymbolDefinitionTypeMismatchException;
-
 // Stimuli listen for something. They are run by the Broker
 public abstract class Stimulus implements Callable<Void>
 {
-    public static class SymbolExportException extends Exception
-    {
-        SymbolExportException()
-        {
-            super("Exported symbols do not match defined symbols");
-        }
-    }
 
     Broker broker;
 
     public final String name;
 
-    private SymbolDataV2 symbolData;
+    private StimulusData data = new StimulusData();
 
     // Calling trigger causes connected responses to happen
     protected void trigger()
     {
         if(broker != null)
         {
-            broker.receive(this, symbolData);
+            // broker.receive(this, symbolData);
+            broker.receive(this, data);
         }
     }
-
     
-    abstract protected void declareSymbols(SymbolDeclarations declarations); // Define / Declare symbols
-    abstract protected void init() throws Exception; // Initialize the stimulus
-    abstract protected void main() throws Exception; // Actually perform the stimulus
-    abstract protected void cleanup() throws Exception; // Shut down the stimulus
+    abstract protected void main();
 
-    // Call will be handled by base class and then stimuli will
-    // Define symbols and main class
+    // Call will be handled by base class and then call main. This lets us use regular void instead of the Void class
 
-    public Void call() throws Exception
+    public Void call()
     {
-        declareSymbols(symbolData.declarations);
-        try 
-        {
-            main();    
-        } 
-        catch (Exception e) 
-        {
-            throw e;
-        }
+        main();
 
         return null;
     }
 
-    protected void publishSymbol(String name, Object value) throws SymbolDefinitionTypeMismatchException, SymbolDefinedWithoutDeclarationException
+    protected void publish(String name, Object value)
     {
-        symbolData.defineSymbol(name, value);
+        data.put(name, value);
     }
 
     public void pair(Broker broker)

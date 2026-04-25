@@ -27,3 +27,11 @@ Synapse scripts use the following grammar:
 ~ is used to start a single line comment. Synapse script does not support multi-line comments
 
 Parameters are published by Stimuli and consumed by Responses in the respective module code. Synapse scripts do not control parameter passing
+
+## Note:
+
+Synapse relies on reflection internally in order to provide data to response objects in a type-safe compile-time aware manner
+
+Scripts compiled for use with Synapse MUST be compiled using the "-parameters" flag so that they retain parameter names for reflection purposes.
+
+Failure to do so will result in an exception being thrown because response objects consider both parameter names and types when verifying input data to responses.

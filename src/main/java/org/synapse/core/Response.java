@@ -1,7 +1,10 @@
 package org.synapse.core;
 
-import org.synapse.core.symbols.SymbolDataV2;
-import org.synapse.core.symbols.SymbolDeclarations;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
 
 // Responses do something when triggered
 // The most basic form of this is just an interface 
@@ -14,21 +17,79 @@ import org.synapse.core.symbols.SymbolDeclarations;
 
 public abstract class Response 
 {
-    public final String name;
-    private SymbolDeclarations declarations;
+    public final String mainMethod = "main"; // Used for reflection
 
-    public void trigger(SymbolDataV2 data)
+    public final String name;
+
+    // Find the main method, then check the incoming data and pass data
+    // Using methods and reflection ensures that responses receive valid objects as parameters that are accessible at compile time
+    // This is the cleanest way to go about all of this.
+    // Additionally, since we have these checks, we can get rid of all the symbol overhead
+    // We can just export a hashmap of data and match it against this.
+
+    public List<Method> getMethods(String name)
     {
-        declareRequiredSymbols(declarations);
-        main();
+        List<Method> result = new LinkedList<>();
+        Method[] methods = this.getClass().getDeclaredMethods();
+        for (Method method : methods) 
+        {
+            if(method.getName().equals(name) && method.canAccess(this))
+            {
+                result.add(method);
+            }
+        }
+
+        return result;
     }
 
-    protected abstract void declareRequiredSymbols(SymbolDeclarations declarations);
-    protected abstract void main();
-
-    private void validateInputSymbols(SymbolDataV2 data)
+    public void trigger(StimulusData data)
     {
-        
+        List<Method> methods = getMethods(mainMethod);
+        if(methods.isEmpty())
+        {
+            throw new RuntimeException("Could not find method " + mainMethod);
+        }
+
+        for (Method method : methods) 
+        {
+            // Skip the method if the parameter count is greater than our data
+            if(method.getParameterCount() > data.size())
+            {
+                continue;
+            }
+
+            // Prepare the parameter list while we verify it
+            Object[] symbolValues = new Object[method.getParameterCount()];
+            int symbolIndex = 0;
+
+            for(Parameter p : method.getParameters())
+            {
+                // Parameter names need to be kept
+                // This requires the -parameters flag
+                Optional<?> variable = data.get(p.getName(), p.getType());
+                if(variable.isPresent())
+                {
+                    symbolValues[symbolIndex] = variable.orElseThrow();
+                    symbolIndex++;
+                }
+                else
+                {
+                    continue; // No variable matches this parameter, so move on to next method.
+                }
+            }
+
+            try 
+            {
+                method.invoke(this, symbolValues);
+                return;
+            } 
+            catch (Exception e) 
+            {
+                throw new RuntimeException("Stimulus failed to provide all required variables for this response");
+            } 
+        }
+
+        throw new RuntimeException("Stimulus failed to provide all required variables for this response");
     }
 
     protected Response(String name)
