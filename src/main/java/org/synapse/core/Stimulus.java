@@ -5,9 +5,11 @@ import java.util.concurrent.Callable;
 // Stimuli listen for something. They are run by the Broker
 public abstract class Stimulus implements Callable<Void>
 {
+
     Broker broker;
 
-    public final String name;
+    // public final String name;
+
     private StimulusData data = new StimulusData();
 
     // Calling trigger causes connected responses to happen
@@ -15,14 +17,23 @@ public abstract class Stimulus implements Callable<Void>
     {
         if(broker != null)
         {
+            // broker.receive(this, symbolData);
             broker.receive(this, data);
         }
     }
+    
+    abstract protected void main();
 
-    abstract public Void call();
+    // Call will be handled by base class and then call main. This lets us use regular void instead of the Void class
 
-    // Store stores data which is then passed to connected responses
-    protected void store(String name, Object value)
+    public Void call()
+    {
+        main();
+
+        return null;
+    }
+
+    protected void publish(String name, Object value)
     {
         data.put(name, value);
     }
@@ -30,11 +41,6 @@ public abstract class Stimulus implements Callable<Void>
     public void pair(Broker broker)
     {
         this.broker = broker;
-    }
-
-    protected Stimulus(String name)
-    {
-        this.name = name;
     }
 
 }

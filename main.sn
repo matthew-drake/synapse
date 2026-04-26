@@ -1,5 +1,7 @@
-import org.synapse.modules.stimuli.StartStimulus
-import org.synapse.modules.responses.PrintResponse
+import org.synapse.modules.stimuli.StartStimulus as start
+import org.synapse.modules.responses.PrintResponse as print
+import org.synapse.modules.stimuli.CounterStimulus as count
 
 ~ Connects the start stimulus to the print response
 start --> print
+count --> print

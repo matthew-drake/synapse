@@ -25,12 +25,12 @@ public class Broker
     public void start(Script script) throws InterruptedException
     {
         this.script = script;
-        executor.invokeAll(script.getStimuli());
+        // executor.invokeAll(script.getStimuli());
 
         // For debugging: (single threaded version of invokeAll)
-        // for (Stimulus stimulus : script.getStimuli()) {
-        //     stimulus.call();
-        // }
+        for (Stimulus stimulus : script.getStimuli()) {
+            stimulus.call();
+        }
     }
 
 
