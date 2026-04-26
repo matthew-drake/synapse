@@ -17,7 +17,7 @@ public class ScriptTokenizer
 
     public enum TokenType
     {
-        IMPORT, CONNECTOR, DATA, LINE_SEPARATOR, EOF
+        IMPORT, CONNECTOR, DATA, LINE_SEPARATOR, EOF, AS
     }
 
     public List<Token<TokenType>> tokenize(String input)
@@ -38,6 +38,11 @@ public class ScriptTokenizer
                 else if(textBuffer.equals("import"))
                 {
                     result.add(new Token<>(TokenType.IMPORT, textBuffer));
+                    textBuffer = "";
+                }
+                else if(textBuffer.equals("as"))
+                {
+                    result.add(new Token<>(TokenType.AS, textBuffer));
                     textBuffer = "";
                 }
                 else if(textBuffer.equals("-->"))

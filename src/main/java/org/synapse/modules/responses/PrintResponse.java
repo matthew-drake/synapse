@@ -4,15 +4,9 @@ import org.synapse.core.Response;
 
 public class PrintResponse extends Response
 {
-    public PrintResponse() 
-    {
-        super("print");
-    }
-
     @Bind(strategy = BindStrategy.Annotation)
     public void main(@BindParam("msg") String msg) 
     {
         System.out.println(msg);
     }
-
 }

@@ -45,7 +45,7 @@ public abstract class Response
 
     public final String mainMethod = "main"; // Used for reflection
 
-    public final String name;
+    // public final String name;
 
     // Find the main method, then check the incoming data and pass data
     // Using methods and reflection ensures that responses receive valid objects as parameters that are accessible at compile time
@@ -182,10 +182,5 @@ public abstract class Response
         {
             throw new RuntimeException("Stimulus failed to provide all required variables for this response");
         } 
-    }
-
-    protected Response(String name)
-    {
-        this.name = name;
     }
 }

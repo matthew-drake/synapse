@@ -31,14 +31,15 @@ public class ScriptParser extends RecursiveDescentParser<TokenType>
     Script result;
     Broker broker;
 
-    void registerImportedClass(Class<?> clazz) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+    void registerImportedClass(String name, Class<?> clazz) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
         if(Response.class.isAssignableFrom(clazz))
         {
             Constructor<?> constructor;
             constructor = clazz.getDeclaredConstructor();
             Response response = Response.class.cast(constructor.newInstance());
-            responseMappings.put(response.name, response);
+            // responseMappings.put(response.name, response);
+            responseMappings.put(name, response);
                 
         }
         else if(Stimulus.class.isAssignableFrom(clazz))
@@ -47,7 +48,8 @@ public class ScriptParser extends RecursiveDescentParser<TokenType>
             constructor = clazz.getDeclaredConstructor();
             Stimulus stimulus = Stimulus.class.cast(constructor.newInstance());
             stimulus.pair(broker);
-            stimulusMappings.put(stimulus.name, stimulus);
+            // stimulusMappings.put(stimulus.name, stimulus);
+            stimulusMappings.put(name, stimulus);
         }
     }
 
@@ -90,15 +92,28 @@ public class ScriptParser extends RecursiveDescentParser<TokenType>
 
     void importStatement() throws SyntaxError, ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
+        Class<?> clazz = null;
+        String name = null;
+
         expect(TokenType.IMPORT);
+
         if(match(TokenType.DATA))
         {
-            Token<TokenType> token = currentToken();
-            Class<?> clazz = Class.forName(token.value);
-            registerImportedClass(clazz);
-
-            expect(TokenType.DATA);        
+            clazz = Class.forName(currentToken().value);
         }
+
+        expect(TokenType.DATA);
+        expect(TokenType.AS);
+
+        if(match(TokenType.DATA))
+        {
+            name = currentToken().value;
+        }
+
+        expect(TokenType.DATA);
+
+        registerImportedClass(name, clazz);
+
     }
 
     void connectionStatement() throws SyntaxError

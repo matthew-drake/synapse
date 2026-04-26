@@ -1,15 +1,7 @@
-import org.synapse.modules.stimuli.StartStimulus
-import org.synapse.modules.responses.PrintResponse
-
-~ We should create a syntax that assigns a name instead of taking it from Stimulus/response
-~ We could use import <url> as <name>
-~ OR: [org.synapse.modules.stimuli.StartStimulus] --> start
-
-~ OR: (org.synapse.modules.responses.PrintResponse) --> print
-
-~ This reuses some tokens but it makes it a little tricky
-~ in larger files to differentiate imports and responses
-
+import org.synapse.modules.stimuli.StartStimulus as start
+import org.synapse.modules.responses.PrintResponse as print
+import org.synapse.modules.stimuli.CounterStimulus as count
 
 ~ Connects the start stimulus to the print response
 start --> print
+count --> print

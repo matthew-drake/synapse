@@ -21,11 +21,12 @@ Usage: `java -jar <path-to-synapse> <script-path>`
 
 Synapse scripts use the following grammar:
 
-
-    \<program\> ::= \<statement\> \<program\> | \<statement\>
-    \<statement\> ::= \<import\> \<line-separator\> | \<connection\> \<line-separator\>
-    \<import\> ::= "import " \<name\>
-    \<connection\> ::= \<name\> " --> " \<name\>
+```
+    <program> ::= <statement> <program> | <statement>
+    <statement> ::= <import> <line-separator> | <connection> <line-separator>
+    <import> ::= "import " <name> as <name>
+    <connection> ::= <name> " --> " <name>
+```
 
 
 ~ is used to start a single line comment. Synapse script does not support multi-line comments

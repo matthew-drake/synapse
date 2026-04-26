@@ -8,7 +8,7 @@ public abstract class Stimulus implements Callable<Void>
 
     Broker broker;
 
-    public final String name;
+    // public final String name;
 
     private StimulusData data = new StimulusData();
 
@@ -41,11 +41,6 @@ public abstract class Stimulus implements Callable<Void>
     public void pair(Broker broker)
     {
         this.broker = broker;
-    }
-
-    protected Stimulus(String name)
-    {
-        this.name = name;
     }
 
 }
