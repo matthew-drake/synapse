@@ -10,6 +10,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 // Responses do something when triggered. This amounts to calling the main function on the response
 // Most of the code in this class has to do with unrolling stimulus data into a list of type-safe variables
 // I find that using method parameters is a great way to handle this (after all we are just linking methods at runtime)
@@ -43,6 +46,7 @@ public abstract class Response
         BindStrategy strategy();
     }
 
+    protected final Logger logger = LogManager.getLogger(this.getClass());
     public final String mainMethod = "main"; // Used for reflection
 
     // public final String name;
@@ -73,7 +77,8 @@ public abstract class Response
         List<Method> methods = getMethods(mainMethod);
         if(methods.isEmpty())
         {
-            throw new RuntimeException("Could not find method " + mainMethod + " with bind annotation");
+            logger.error("Could not find method {} with bind annotation", mainMethod);
+            return;
         }
 
         for (Method method : methods) 
@@ -91,11 +96,12 @@ public abstract class Response
                     return;
             
                 default:
-                    throw new RuntimeException("Invalid bind strategy " + bindAnnotation.strategy().name());
+                    logger.error("Invalid bind strategy " + bindAnnotation.strategy().name());
+                    break;
             }
         }
 
-        throw new RuntimeException("Stimulus failed to provide all required variables for this response");
+        logger.error("Stimulus failed to provide all required data");
     }
 
     private void AnnotationDispatch(Method method, StimulusData data)
@@ -118,7 +124,8 @@ public abstract class Response
 
             if(bindAnnotation == null)
             {
-                throw new RuntimeException("All parameters require @Bind when using annotation binding");
+                logger.error("All parameters require @Bind when using annotation binding");
+                return;
             }
 
             Optional<?> variable = data.get(bindAnnotation.value(), p.getType());
@@ -140,7 +147,7 @@ public abstract class Response
         } 
         catch (Exception e) 
         {
-            throw new RuntimeException("Stimulus failed to provide all required variables for this response");
+            logger.error("Stimulus failed to provide all required variables for this response");
         } 
     
     }
@@ -150,6 +157,7 @@ public abstract class Response
         // Skip the method if the parameter count is greater than our data
         if(method.getParameterCount() > data.size())
         {
+            logger.error("Stimulus failed to provide all required variables for this response");
             return;
         }
 
@@ -180,7 +188,7 @@ public abstract class Response
         } 
         catch (Exception e) 
         {
-            throw new RuntimeException("Stimulus failed to provide all required variables for this response");
+            logger.error("Stimulus failed to provide all required variables for this response");
         } 
     }
 }

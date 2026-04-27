@@ -3,11 +3,15 @@ package org.synapse.core;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 // The broker is the middleman that is responsible for actually running Synapse
 // The Broker has a script that is used to run all Stimuli which then trigger responses
 
 public class Broker 
 {
+    final static Logger logger = LogManager.getLogger();
     final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
     Script script;
 
@@ -24,13 +28,15 @@ public class Broker
 
     public void start(Script script) throws InterruptedException
     {
+        logger.info("Broker started");
         this.script = script;
-        // executor.invokeAll(script.getStimuli());
-
+        executor.invokeAll(script.getStimuli());
+        
         // For debugging: (single threaded version of invokeAll)
-        for (Stimulus stimulus : script.getStimuli()) {
-            stimulus.call();
-        }
+        // for (Stimulus stimulus : script.getStimuli()) 
+        // {
+        //     stimulus.call();
+        // }
     }
 
 
