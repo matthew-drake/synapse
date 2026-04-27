@@ -7,7 +7,6 @@ public class StartStimulus extends Stimulus
     @Override
     protected void main()
     {
-        logger.info("Logging from a derived stimulus");
         publish("msg", "Welcome to Synapse");
         trigger();
     }

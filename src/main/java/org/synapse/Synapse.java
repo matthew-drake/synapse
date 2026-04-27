@@ -14,7 +14,8 @@ import org.synapse.parsing.ScriptTokenizer;
 import org.synapse.parsing.ScriptTokenizer.TokenType;
 import org.synapse.parsing.Token;
 
-public class Synapse {
+public class Synapse 
+{
     public static void main(String[] args) throws InterruptedException, ClassNotFoundException, SyntaxError, IOException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException 
     {
         Broker broker = new Broker();

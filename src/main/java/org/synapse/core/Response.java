@@ -85,31 +85,39 @@ public abstract class Response
         {
 
             Bind bindAnnotation = method.getAnnotation(Bind.class);
-            switch (bindAnnotation.strategy()) 
+            if(bindAnnotation.strategy() == BindStrategy.Implicit)
             {
-                case Implicit:
-                    ParameterDispatch(method, data);
+                if(ParameterDispatch(method, data))
+                {
                     return;
-
-                case Annotation:
-                    AnnotationDispatch(method, data);
-                    return;
-            
-                default:
-                    logger.error("Invalid bind strategy " + bindAnnotation.strategy().name());
-                    break;
+                }
+                else
+                {
+                    logger.error("Failed to implicitly bind to main method");
+                }
+            }
+            else if(bindAnnotation.strategy() == BindStrategy.Annotation)
+            {
+                if(!AnnotationDispatch(method, data))
+                {
+                    logger.error("Failed to annotation bind to main method");
+                }
+            }
+            else
+            {
+                logger.error("Invalid bind strategy " + bindAnnotation.strategy().name());
             }
         }
 
         logger.error("Stimulus failed to provide all required data");
     }
 
-    private void AnnotationDispatch(Method method, StimulusData data)
+    private boolean AnnotationDispatch(Method method, StimulusData data)
     {
         // Skip the method if the parameter count is greater than our data
         if(method.getParameterCount() > data.size())
         {
-            return;
+            return false;
         }
 
         // Prepare the parameter list while we verify it
@@ -118,14 +126,12 @@ public abstract class Response
 
         for(Parameter p : method.getParameters())
         {
-            // Parameter names need to be kept
-            // This requires the -parameters flag
             BindParam bindAnnotation = p.getDeclaredAnnotation(BindParam.class);
 
             if(bindAnnotation == null)
             {
                 logger.error("All parameters require @Bind when using annotation binding");
-                return;
+                return false;
             }
 
             Optional<?> variable = data.get(bindAnnotation.value(), p.getType());
@@ -136,29 +142,30 @@ public abstract class Response
             }
             else
             {
-                continue; // No variable matches this parameter, so move on to next method.
+                return false; // No variable matches this parameter, so move on to next method.
             }
         }
 
         try 
         {
             method.invoke(this, symbolValues);
-            return;
+            return true;
         } 
         catch (Exception e) 
         {
-            logger.error("Stimulus failed to provide all required variables for this response");
+            logger.error("Error invoking main method");
+            return false;
         } 
     
     }
 
-    private void ParameterDispatch(Method method, StimulusData data)
+    private boolean ParameterDispatch(Method method, StimulusData data)
     {
         // Skip the method if the parameter count is greater than our data
         if(method.getParameterCount() > data.size())
         {
             logger.error("Stimulus failed to provide all required variables for this response");
-            return;
+            return false;
         }
 
         // Prepare the parameter list while we verify it
@@ -177,18 +184,19 @@ public abstract class Response
             }
             else
             {
-                return; // No variable matches this parameter, so move on to next method.
+                return false; // No variable matches this parameter, so move on to next method.
             }
         }
 
         try 
         {
             method.invoke(this, symbolValues);
-            return;
+            return true;
         } 
         catch (Exception e) 
         {
-            logger.error("Stimulus failed to provide all required variables for this response");
+            logger.error("Error invoking main method");
+            return false;
         } 
     }
 }
