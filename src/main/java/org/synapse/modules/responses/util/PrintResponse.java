@@ -1,4 +1,4 @@
-package org.synapse.modules.responses;
+package org.synapse.modules.responses.util;
 
 import org.synapse.core.Response;
 
