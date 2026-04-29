@@ -4,11 +4,13 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,16 +65,24 @@ public abstract class Response
         Method[] methods = this.getClass().getDeclaredMethods();
         for (Method method : methods) 
         {
-            if(method.getName().equals(name) && method.canAccess(this) && method.isAnnotationPresent(Bind.class))
+            if(method.getName().equals(name) && method.canAccess(this))
             {
-                result.add(method);
+                if(method.getParameterCount() == 0 || method.isAnnotationPresent(Bind.class))
+                {
+                    result.add(method);
+                }
             }
         }
 
         return result;
     }
 
-    public void trigger(StimulusData data)
+    public void asyncTrigger(final ExecutorService executor, final StimulusData data)
+    {
+        executor.submit(() -> {trigger(data);});
+    }
+
+    public void trigger(final StimulusData data)
     {
         List<Method> methods = getMethods(mainMethod);
         if(methods.isEmpty())
@@ -85,6 +95,13 @@ public abstract class Response
         {
 
             Bind bindAnnotation = method.getAnnotation(Bind.class);
+            if(bindAnnotation == null && method.getParameterCount() == 0)
+            {
+                if(invokeMethod(method))
+                {
+                    return;
+                }
+            }
             if(bindAnnotation.strategy() == BindStrategy.Implicit)
             {
                 if(ParameterDispatch(method, data))
@@ -146,16 +163,18 @@ public abstract class Response
             }
         }
 
-        try 
-        {
-            method.invoke(this, symbolValues);
-            return true;
-        } 
-        catch (Exception e) 
-        {
-            logger.error("Error invoking main method");
-            return false;
-        } 
+        return invokeMethod(method, symbolValues);
+
+        // try 
+        // {
+        //     method.invoke(this, symbolValues);
+        //     return true;
+        // } 
+        // catch (Exception e) 
+        // {
+        //     logger.error("Error invoking main method");
+        //     return false;
+        // } 
     
     }
 
@@ -188,9 +207,25 @@ public abstract class Response
             }
         }
 
+        return invokeMethod(method, symbolValues);
+
+        // try 
+        // {
+        //     method.invoke(this, symbolValues);
+        //     return true;
+        // } 
+        // catch (Exception e) 
+        // {
+        //     logger.error("Error invoking main method");
+        //     return false;
+        // } 
+    }
+
+    private boolean invokeMethod(Method method, Object... parameters)
+    {
         try 
         {
-            method.invoke(this, symbolValues);
+            method.invoke(this, parameters);
             return true;
         } 
         catch (Exception e) 

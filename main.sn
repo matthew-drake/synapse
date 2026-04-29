@@ -1,7 +1,8 @@
 import org.synapse.modules.stimuli.StartStimulus as start
 import org.synapse.modules.responses.PrintResponse as print
 import org.synapse.modules.stimuli.CounterStimulus as count
+import org.synapse.modules.responses.BlockResponse as block
 
 ~ Connects the start stimulus to the print response
-start --> print
-count --> print
+~ start --> print
+count --> block
