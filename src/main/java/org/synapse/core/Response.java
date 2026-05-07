@@ -4,11 +4,16 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 // Responses do something when triggered. This amounts to calling the main function on the response
 // Most of the code in this class has to do with unrolling stimulus data into a list of type-safe variables
@@ -43,6 +48,7 @@ public abstract class Response
         BindStrategy strategy();
     }
 
+    protected final Logger logger = LogManager.getLogger(this.getClass());
     public final String mainMethod = "main"; // Used for reflection
 
     // public final String name;
@@ -59,51 +65,76 @@ public abstract class Response
         Method[] methods = this.getClass().getDeclaredMethods();
         for (Method method : methods) 
         {
-            if(method.getName().equals(name) && method.canAccess(this) && method.isAnnotationPresent(Bind.class))
+            if(method.getName().equals(name) && method.canAccess(this))
             {
-                result.add(method);
+                if(method.getParameterCount() == 0 || method.isAnnotationPresent(Bind.class))
+                {
+                    result.add(method);
+                }
             }
         }
 
         return result;
     }
 
-    public void trigger(StimulusData data)
+    public void asyncTrigger(final ExecutorService executor, final StimulusData data)
+    {
+        executor.submit(() -> {trigger(data);});
+    }
+
+    public void trigger(final StimulusData data)
     {
         List<Method> methods = getMethods(mainMethod);
         if(methods.isEmpty())
         {
-            throw new RuntimeException("Could not find method " + mainMethod + " with bind annotation");
+            logger.error("Could not find method {} with bind annotation", mainMethod);
+            return;
         }
 
         for (Method method : methods) 
         {
 
             Bind bindAnnotation = method.getAnnotation(Bind.class);
-            switch (bindAnnotation.strategy()) 
+            if(bindAnnotation == null && method.getParameterCount() == 0)
             {
-                case Implicit:
-                    ParameterDispatch(method, data);
+                if(invokeMethod(method))
+                {
                     return;
-
-                case Annotation:
-                    AnnotationDispatch(method, data);
+                }
+            }
+            if(bindAnnotation.strategy() == BindStrategy.Implicit)
+            {
+                if(ParameterDispatch(method, data))
+                {
                     return;
-            
-                default:
-                    throw new RuntimeException("Invalid bind strategy " + bindAnnotation.strategy().name());
+                }
+                else
+                {
+                    logger.error("Failed to implicitly bind to main method");
+                }
+            }
+            else if(bindAnnotation.strategy() == BindStrategy.Annotation)
+            {
+                if(!AnnotationDispatch(method, data))
+                {
+                    logger.error("Failed to annotation bind to main method");
+                }
+            }
+            else
+            {
+                logger.error("Invalid bind strategy " + bindAnnotation.strategy().name());
             }
         }
 
-        throw new RuntimeException("Stimulus failed to provide all required variables for this response");
+        logger.error("Stimulus failed to provide all required data");
     }
 
-    private void AnnotationDispatch(Method method, StimulusData data)
+    private boolean AnnotationDispatch(Method method, StimulusData data)
     {
         // Skip the method if the parameter count is greater than our data
         if(method.getParameterCount() > data.size())
         {
-            return;
+            return false;
         }
 
         // Prepare the parameter list while we verify it
@@ -112,13 +143,12 @@ public abstract class Response
 
         for(Parameter p : method.getParameters())
         {
-            // Parameter names need to be kept
-            // This requires the -parameters flag
             BindParam bindAnnotation = p.getDeclaredAnnotation(BindParam.class);
 
             if(bindAnnotation == null)
             {
-                throw new RuntimeException("All parameters require @Bind when using annotation binding");
+                logger.error("All parameters require @Bind when using annotation binding");
+                return false;
             }
 
             Optional<?> variable = data.get(bindAnnotation.value(), p.getType());
@@ -129,28 +159,32 @@ public abstract class Response
             }
             else
             {
-                continue; // No variable matches this parameter, so move on to next method.
+                return false; // No variable matches this parameter, so move on to next method.
             }
         }
 
-        try 
-        {
-            method.invoke(this, symbolValues);
-            return;
-        } 
-        catch (Exception e) 
-        {
-            throw new RuntimeException("Stimulus failed to provide all required variables for this response");
-        } 
+        return invokeMethod(method, symbolValues);
+
+        // try 
+        // {
+        //     method.invoke(this, symbolValues);
+        //     return true;
+        // } 
+        // catch (Exception e) 
+        // {
+        //     logger.error("Error invoking main method");
+        //     return false;
+        // } 
     
     }
 
-    private void ParameterDispatch(Method method, StimulusData data)
+    private boolean ParameterDispatch(Method method, StimulusData data)
     {
         // Skip the method if the parameter count is greater than our data
         if(method.getParameterCount() > data.size())
         {
-            return;
+            logger.error("Stimulus failed to provide all required variables for this response");
+            return false;
         }
 
         // Prepare the parameter list while we verify it
@@ -169,18 +203,35 @@ public abstract class Response
             }
             else
             {
-                return; // No variable matches this parameter, so move on to next method.
+                return false; // No variable matches this parameter, so move on to next method.
             }
         }
 
+        return invokeMethod(method, symbolValues);
+
+        // try 
+        // {
+        //     method.invoke(this, symbolValues);
+        //     return true;
+        // } 
+        // catch (Exception e) 
+        // {
+        //     logger.error("Error invoking main method");
+        //     return false;
+        // } 
+    }
+
+    private boolean invokeMethod(Method method, Object... parameters)
+    {
         try 
         {
-            method.invoke(this, symbolValues);
-            return;
+            method.invoke(this, parameters);
+            return true;
         } 
         catch (Exception e) 
         {
-            throw new RuntimeException("Stimulus failed to provide all required variables for this response");
+            logger.error("Error invoking main method");
+            return false;
         } 
     }
 }

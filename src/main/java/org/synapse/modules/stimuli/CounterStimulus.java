@@ -22,7 +22,6 @@ public class CounterStimulus extends Stimulus
             } 
             catch (InterruptedException e) 
             {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }

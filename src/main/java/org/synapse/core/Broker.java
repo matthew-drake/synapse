@@ -2,13 +2,20 @@ package org.synapse.core;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 // The broker is the middleman that is responsible for actually running Synapse
 // The Broker has a script that is used to run all Stimuli which then trigger responses
 
 public class Broker 
 {
-    final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+    final static Logger logger = LogManager.getLogger();
+    final ExecutorService stimulusExecutor;
+    final ExecutorService responseExecutor;
+
     Script script;
 
     public void receive(Stimulus stimulus, StimulusData data)
@@ -17,7 +24,7 @@ public class Broker
         {
             for(Response response : script.getResponses(stimulus))
             {
-                response.trigger(data);
+                response.asyncTrigger(responseExecutor, data);
             }
         }
     }
@@ -25,12 +32,24 @@ public class Broker
     public void start(Script script) throws InterruptedException
     {
         this.script = script;
-        // executor.invokeAll(script.getStimuli());
-
+        stimulusExecutor.invokeAll(script.getStimuli());
+        
         // For debugging: (single threaded version of invokeAll)
-        for (Stimulus stimulus : script.getStimuli()) {
-            stimulus.call();
-        }
+        // for (Stimulus stimulus : script.getStimuli()) 
+        // {
+        //     stimulus.call();
+        // }
+    }
+
+    public Broker()
+    {
+        // Stimulus executor
+        ThreadFactory stimulusThreadFactory = Thread.ofVirtual().name("stimulus-", 0).factory();
+        stimulusExecutor = Executors.newThreadPerTaskExecutor(stimulusThreadFactory);
+
+        // Response executor
+        ThreadFactory responseThreadFactory = Thread.ofVirtual().name("response", 0).factory();
+        responseExecutor = Executors.newCachedThreadPool(responseThreadFactory);
     }
 
 

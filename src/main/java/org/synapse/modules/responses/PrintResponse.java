@@ -7,6 +7,7 @@ public class PrintResponse extends Response
     @Bind(strategy = BindStrategy.Annotation)
     public void main(@BindParam("msg") String msg) 
     {
+        logger.info("Print stimulus triggered");
         System.out.println(msg);
     }
 }

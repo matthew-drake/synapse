@@ -2,14 +2,16 @@ package org.synapse.core;
 
 import java.util.concurrent.Callable;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 // Stimuli listen for something. They are run by the Broker
 public abstract class Stimulus implements Callable<Void>
 {
 
     Broker broker;
 
-    // public final String name;
-
+    protected final Logger logger = LogManager.getLogger(this.getClass());
     private StimulusData data = new StimulusData();
 
     // Calling trigger causes connected responses to happen
@@ -24,8 +26,8 @@ public abstract class Stimulus implements Callable<Void>
     
     abstract protected void main();
 
-    // Call will be handled by base class and then call main. This lets us use regular void instead of the Void class
-
+    // Call will be handled by base class and then call main on subclass
+    // This lets us hide the call function from the Stimulus
     public Void call()
     {
         main();
